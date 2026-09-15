@@ -1,0 +1,9 @@
+{
+  "expected_classification": "API",
+  "expected_severity": "Major",
+  "must_contain": [
+    "market_place_results",
+    "current_merchant_results",
+    "cart_merchant_results"
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "test_name": "testMarketplaceSearchRecovery",
+  "feature": "Marketplace Search",
+  "environment": "STAGE",
+  "expected_result": "Marketplace recovery results should be returned when current and cart results are below 4.",
+  "actual_result": "Current merchant results count is 1 and cart merchant results count is 1, but market_place_results is missing.",
+  "endpoint": "GET /api/v1/search/market_place_merchant",
+  "response": {
+    "current_merchant_results": {
+      "count": 1
+    },
+    "cart_merchant_results": {
+      "count": 1
+    }
+  },
+  "build_version": "5.69.0"
+}
