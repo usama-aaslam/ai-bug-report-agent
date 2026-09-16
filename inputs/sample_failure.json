@@ -1,10 +1,14 @@
 {
-  "test_name": "testMarketplaceSearchRecovery",
-  "feature": "Marketplace Search",
+  "test_name": "testRecoveryResult",
+  "feature": "Search",
   "environment": "STAGE",
-  "expected_result": "Marketplace recovery results should be returned when current and cart results are below 4.",
+  "expected_result": "Recovery results should be returned when current and cart results are below 4.",
   "actual_result": "Current merchant results count is 1 and cart merchant results count is 1, but market_place_results is missing.",
-  "endpoint": "GET /api/v1/search/market_place_merchant",
+  "endpoint": "GET /api/v1/mp_merchant",
+  "request": {
+    "term": "Apple",
+    "branch_id": "automation_branch_id"
+  },
   "response": {
     "current_merchant_results": {
       "count": 1
