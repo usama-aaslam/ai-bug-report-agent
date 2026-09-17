@@ -1,109 +1,133 @@
 # AI Bug Report Agent
 
-A QA-focused Python project that converts automated test failure evidence into a structured, Jira-ready bug report using the OpenAI Agents SDK.
+A Python-based QA project that captures automated test failures and uses the OpenAI Agents SDK to generate structured, Jira-ready bug reports.
 
-## What it does
+## Current Flow
 
-1. Reads structured failure evidence from JSON.
-2. Validates the evidence with Pydantic.
-3. Sends the evidence to a QA Bug Report Agent.
-4. Requires a structured `BugReport` response.
-5. Saves the result as a Markdown report.
+```text
+API Test
+   ↓
+pytest failure
+   ↓
+conftest.py
+   ↓
+generated_failure.json
+   ↓
+Bug Report Agent
+   ↓
+reports/bug-report.md
+```
 
-## Project structure
+## Features
+
+* API testing with `pytest`
+* automatic failure capture
+* Pydantic validation
+* OpenAI-powered bug report generation
+* structured severity and failure classification
+* Markdown bug report output
+* ReqRes API integration
+* `.env` based API key management
+
+## Project Structure
 
 ```text
 ai-bug-report-agent/
 ├── agent/
-│   ├── __init__.py
 │   ├── bug_agent.py
 │   ├── models.py
 │   ├── prompts.py
 │   └── report_generator.py
+├── services/
+│   └── reqres_client.py
 ├── inputs/
-│   └── sample_failure.json
+│   ├── sample_failure.json
+│   └── generated_failure.json
 ├── reports/
-│   └── .gitkeep
 ├── tests/
-│   ├── evaluation_cases.json
-│   └── test_bug_agent.py
-├── .env.example
-├── .gitignore
+│   ├── test_bug_agent.py
+│   └── test_reqres_api.py
+├── conftest.py
 ├── main.py
 ├── requirements.txt
-└── README.md
+└── .env.example
 ```
 
 ## Setup
 
-Python 3.11+ is recommended.
-
-### Windows PowerShell
-
-```powershell
-python -m venv .venv
-.\.venv\Scripts\Activate.ps1
-pip install -r requirements.txt
-Copy-Item .env.example .env
-```
-
-### macOS/Linux
+Install dependencies:
 
 ```bash
-python3 -m venv .venv
-source .venv/bin/activate
 pip install -r requirements.txt
-cp .env.example .env
 ```
 
-Add your OpenAI API key to `.env`:
+Create `.env`:
 
 ```text
-OPENAI_API_KEY=your_key_here
+OPENAI_API_KEY=your_openai_api_key
+REQRES_API_KEY=your_reqres_api_key
 ```
 
 Do not commit `.env`.
 
-## Validate the input without an API call
+## Run API Test
 
 ```bash
-python main.py --validate-only
+python -m pytest tests/test_reqres_api.py -v
 ```
 
-## Generate a bug report
+If the test fails, the failure is saved to:
+
+```text
+inputs/generated_failure.json
+```
+
+## Generate Bug Report
 
 ```bash
-python main.py
+python main.py --input inputs/generated_failure.json
 ```
 
-The generated Markdown report is written to:
+The generated report is saved to:
 
 ```text
 reports/bug-report.md
 ```
 
-You can provide different files:
+## Validate Input Without Calling OpenAI
 
 ```bash
-python main.py --input inputs/sample_failure.json --output reports/my-report.md
+python main.py --validate-only
 ```
 
-## Run tests
+## Run Unit Tests
 
 ```bash
-pytest -q
+python -m pytest -q
 ```
 
-The unit tests intentionally do not call the OpenAI API, so they can run safely in CI without spending API credits.
+## Current Limitation
 
-## Current scope
+The workflow currently requires two commands:
 
-This is the first working version. Good next increments are:
+```bash
+python -m pytest tests/test_reqres_api.py -v
+python main.py --input inputs/generated_failure.json
+```
 
-- capture failure evidence automatically from pytest;
-- add screenshot evidence from Playwright;
-- add API request/response capture;
-- add product-bug vs test-bug classification;
-- add evaluation scoring from `tests/evaluation_cases.json`;
-- detect duplicate Jira issues;
-- add human-approved Jira ticket creation.
+The next improvement is to automatically trigger the Bug Report Agent whenever pytest detects a failed test.
+
+## Planned Improvements
+
+* automatic agent execution after test failure
+* API request/response evidence capture
+* product bug vs test issue classification
+* confidence scoring
+* screenshot analysis
+* duplicate bug detection
+* Jira integration
+* AI evaluation metrics
+
+## Goal
+
+Build an AI-assisted QA workflow that converts automation failures into structured, evidence-based bug reports with minimal manual effort.
