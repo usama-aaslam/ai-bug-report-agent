@@ -4,10 +4,13 @@ import os
 from pathlib import Path
 
 from dotenv import load_dotenv
-from pydantic import ValidationError
 
-from agent.models import BugReport, TestFailure
-from agent.report_generator import save_markdown
+from agents import Runner
+from dotenv import load_dotenv
+
+from agent.bug_agent import bug_report_agent
+from agent.models import TestFailure
+from agent.report_generator import save_markdown_report
 
 PROJECT_ROOT = Path(__file__).resolve().parent
 DEFAULT_INPUT = PROJECT_ROOT / "inputs" / "sample_failure.json"
@@ -24,7 +27,11 @@ def parse_arguments():
         default=DEFAULT_INPUT,
         help="Path to test failure JSON file",
     )
-
+    parser.add_argument(
+        "--output",
+        default=DEFAULT_OUTPUT,
+        help="Path where bug report will be saved",
+    )
     parser.add_argument(
         "--validate-only",
         action="store_true",

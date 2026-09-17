@@ -6,3 +6,4 @@ __pycache__/
 *.pyc
 reports/*.md
 !reports/.gitkeep
+inputs/generated_failure.json
