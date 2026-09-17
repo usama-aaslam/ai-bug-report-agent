@@ -13,86 +13,79 @@ PROJECT_ROOT = Path(__file__).resolve().parent
 DEFAULT_INPUT = PROJECT_ROOT / "inputs" / "sample_failure.json"
 DEFAULT_OUTPUT = PROJECT_ROOT / "reports" / "bug-report.md"
 
-
-def load_failure(input_path: Path) -> TestFailure:
-    with input_path.open("r", encoding="utf-8") as file:
-        payload = json.load(file)
-    return TestFailure.model_validate(payload)
-
-
-def generate_bug_report(failure: TestFailure) -> BugReport:
-    from agents import Runner
-
-    from agent.bug_agent import bug_report_agent
-
-    result = Runner.run_sync(
-        bug_report_agent,
-        failure.model_dump_json(indent=2),
-    )
-
-    if not isinstance(result.final_output, BugReport):
-        raise TypeError("Bug Report Agent returned an unexpected output type.")
-
-    return result.final_output
-
-
-def parse_args() -> argparse.Namespace:
+def parse_arguments():
     parser = argparse.ArgumentParser(
-        description="Generate a structured Jira-ready bug report from test failure evidence."
+        description = "AI Bug Report Agent",
     )
+
+
     parser.add_argument(
         "--input",
-        type=Path,
         default=DEFAULT_INPUT,
-        help="Path to the test failure JSON file.",
+        help="Path to test failure JSON file",
     )
-    parser.add_argument(
-        "--output",
-        type=Path,
-        default=DEFAULT_OUTPUT,
-        help="Path where the Markdown bug report will be written.",
-    )
+
     parser.add_argument(
         "--validate-only",
         action="store_true",
-        help="Validate the input JSON without making an OpenAI API call.",
+        help="Validate input without calling the AI",
     )
+
     return parser.parse_args()
 
+def load_failure(input_path: str) -> TestFailure:
+   path = Path(input_path)
+   with path.open(
+       "r",
+       encoding="utf-8",
+   ) as file:
+       data = json.load(file)
+       return TestFailure.model_validate(data)
 
-def main() -> int:
-    load_dotenv(PROJECT_ROOT / ".env")
-    args = parse_args()
 
-    try:
-        failure = load_failure(args.input)
-    except (OSError, json.JSONDecodeError, ValidationError) as error:
-        print(f"Input validation failed: {error}")
-        return 1
+def generate_bug_report(failure: TestFailure):
+    failure_json = failure.model_dump_json(
+        indent=2,
+    )
+
+    result = Runner.run_sync(
+        bug_report_agent,
+        failure_json,
+    )
+
+    return result.final_output
+def main():
+    load_dotenv()
+
+    args = parse_arguments()
+
+    failure = load_failure(args.input)
 
     if args.validate_only:
         print("Input is valid.")
-        print(failure.model_dump_json(indent=2))
-        return 0
+        print(
+            failure.model_dump_json(
+                indent=2,
+            )
+        )
+        return
 
     if not os.getenv("OPENAI_API_KEY"):
-        print(
-            "OPENAI_API_KEY is not configured. Copy .env.example to .env, add your key, "
-            "or run with --validate-only."
+        raise RuntimeError(
+            "OPENAI_API_KEY is missing. "
+            "Add it to your .env file."
         )
-        return 1
 
-    try:
-        report = generate_bug_report(failure)
-        saved_path = save_markdown(report, args.output)
-    except Exception as error:  # CLI boundary: show a concise failure to the user.
-        print(f"Bug report generation failed: {error}")
-        return 1
+    report = generate_bug_report(failure)
 
-    print(report.model_dump_json(indent=2))
-    print(f"\nMarkdown report saved to: {saved_path}")
-    return 0
+    save_markdown_report(
+        report,
+        args.output,
+    )
+
+    print("Bug report generated successfully.")
+    print(f"Report: {args.output}")
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    main()
